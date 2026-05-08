@@ -4,7 +4,7 @@ import TopBar from './components/TopBar';
 import Player from './components/Player';
 import Discovery from './components/Discovery';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL;
 
 function App() {
   // ── Single global audio element (prevents double-play bug) ──────────────
