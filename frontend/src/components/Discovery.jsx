@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { PlayCircle, Loader2, Music, RefreshCw } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL;;
 
 function SongRow({ song, onPlay, isActive }) {
   return (
