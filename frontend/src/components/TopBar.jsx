@@ -1,7 +1,7 @@
 import { Search, UserCircle2, X, Music } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL;
 
 function useDebounce(value, delay) {
   const [debounced, setDebounced] = useState(value);
