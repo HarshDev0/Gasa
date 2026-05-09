@@ -106,7 +106,8 @@ async def stream(video_id: str):
     data = await asyncio.to_thread(_ydl_stream, video_id)
     if data and data.get("url"):
         return data
-    raise HTTPException(status_code=404, detail="Stream URL not found")
+    print("YT-DLP FAILED:", video_id, data)
+raise HTTPException(status_code=404, detail=f"Stream failed for {video_id}")
 
 
 @app.get("/api/categories")
