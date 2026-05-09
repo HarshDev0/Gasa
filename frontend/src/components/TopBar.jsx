@@ -1,7 +1,7 @@
 import { Search, UserCircle2, X, Music } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-const API = "https://gasa-hwt8.onrender.com/";;
+const API = "https://gasa-production.up.railway.app";;
 
 function useDebounce(value, delay) {
   const [debounced, setDebounced] = useState(value);
