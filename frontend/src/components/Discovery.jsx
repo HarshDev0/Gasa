@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { PlayCircle, Loader2, Music, RefreshCw } from 'lucide-react';
 
-const API = "https://gasa-production.up.railway.app";;
+const API = "https://gasa-production.up.railway.app";
 
 function SongRow({ song, onPlay, isActive }) {
   return (
@@ -97,9 +97,10 @@ export default function Discovery({ onPlaySong, currentSong, history, setQueue }
 
     setUpLoading(true);
     const params = new URLSearchParams({
-      seed_id:    currentSong.id,
-      seed_title: currentSong.title || '',
-      limit:      '8',
+      seed_id:     currentSong.id,
+      seed_title:  currentSong.title  || '',
+      seed_artist: currentSong.artist || '',
+      limit:       '8',
     });
     fetch(`${API}/api/upnext?${params}`)
       .then(r => r.json())
@@ -144,9 +145,10 @@ export default function Discovery({ onPlaySong, currentSong, history, setQueue }
       prevSeedRef.current = null;
       setUpLoading(true);
       const params = new URLSearchParams({
-        seed_id:    currentSong.id,
-        seed_title: currentSong.title || '',
-        limit:      '8',
+        seed_id:     currentSong.id,
+        seed_title:  currentSong.title  || '',
+        seed_artist: currentSong.artist || '',
+        limit:       '8',
       });
       fetch(`${API}/api/upnext?${params}`)
         .then(r => r.json())

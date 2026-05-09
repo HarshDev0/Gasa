@@ -75,9 +75,11 @@ def _ydl_stream(video_id: str):
         "quiet": True,
         "no_warnings": True,
     }
+    # Always pass a full URL so yt-dlp resolves it correctly
+    url = f"https://www.youtube.com/watch?v={video_id}" if not video_id.startswith("http") else video_id
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            info = ydl.extract_info(video_id, download=False)
+            info = ydl.extract_info(url, download=False)
             # Also grab the real thumbnail/duration in case flat-extract missed them
             thumbs = info.get("thumbnails") or []
             thumb = thumbs[-1].get("url") if thumbs else None
@@ -124,26 +126,59 @@ async def category_songs(category_id: str, limit: int = 8):
     return {"results": results, "category": cat}
 
 
-@app.get("/api/upnext")
-async def upnext(seed_id: str | None = None, seed_title: str | None = None, limit: int = 8):
+def _parse_upnext_queries(seed_title: str | None, seed_artist: str | None) -> list[str]:
     """
-    Smart 'Up Next' that returns recommendations.
-    - If a seed song is known, search for similar songs by title.
-    - Falls back to a popular hits mix.
+    Build 2 diverse search queries for Up Next so results are
+    genuinely related but NOT just re-searches of the same song.
     """
+    noise = {"official", "audio", "video", "lyrics", "ft", "feat", "hd", "mv", "4k", "live"}
+    queries = []
+    if seed_artist:
+        # 1. Other songs by the same artist
+        queries.append(f"{seed_artist} best songs")
     if seed_title:
-        # simple similarity: search variations of the title
-        query = f"{seed_title} similar songs playlist"
-    elif seed_id:
-        query = f"ytsearch1:https://www.youtube.com/watch?v={seed_id}"
-    else:
-        query = "top music hits mix"
+        # 2. Genre/vibe neighbours – strip noise words, keep first 2-3 words
+        clean = " ".join(w for w in seed_title.split() if w.lower() not in noise)
+        short = " ".join(clean.split()[:3])
+        queries.append(f"{short} similar artists mix")
+    return queries or ["top music hits"]
 
-    results = await asyncio.to_thread(_ydl_search, query, limit)
-    # Remove the seed song itself from the list
-    if seed_id:
-        results = [r for r in results if r.get("id") != seed_id]
-    return {"results": results[:limit]}
+
+@app.get("/api/upnext")
+async def upnext(
+    seed_id: str | None = None,
+    seed_title: str | None = None,
+    seed_artist: str | None = None,
+    limit: int = 8,
+):
+    """
+    Smart 'Up Next' — returns genuinely related but different songs.
+    Uses artist + vibe queries in parallel; deduplicates and interleaves results.
+    """
+    if not seed_title and not seed_id:
+        results = await asyncio.to_thread(_ydl_search, "top music hits mix", limit)
+        return {"results": results[:limit]}
+
+    queries = _parse_upnext_queries(seed_title, seed_artist)
+    per_query = max(5, (limit // len(queries)) + 3)
+
+    # Fan out in parallel
+    tasks = [asyncio.to_thread(_ydl_search, q, per_query) for q in queries]
+    buckets = list(await asyncio.gather(*tasks))
+
+    # Interleave buckets, deduplicate, exclude the seed song
+    seen: set[str] = {seed_id} if seed_id else set()
+    interleaved: list[dict] = []
+    while len(interleaved) < limit and any(b for b in buckets):
+        for bucket in buckets:
+            if bucket and len(interleaved) < limit:
+                track = bucket.pop(0)
+                tid = track.get("id")
+                if tid and tid not in seen:
+                    seen.add(tid)
+                    interleaved.append(track)
+
+    return {"results": interleaved[:limit]}
 
 
 if __name__ == "__main__":
