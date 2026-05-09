@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { PlayCircle, Loader2, Music, RefreshCw } from 'lucide-react';
 
-const API = "https://gasa-production.up.railway.app";;
+const API = "https://gasa-hwt8.onrender.com/";;
 
 function SongRow({ song, onPlay, isActive }) {
   return (

@@ -5,6 +5,12 @@ import asyncio
 import random
 import os
 
+cookies = os.getenv("YOUTUBE_COOKIES")
+
+if cookies:
+    with open("cookies.txt", "w", encoding="utf-8") as f:
+        f.write(cookies)
+
 app = FastAPI(title="GASA Music Player API")
 
 app.add_middleware(
@@ -31,12 +37,22 @@ CATEGORY_MAP = {c["id"]: c for c in CATEGORIES}
 def _ydl_search(query: str, max_results: int = 8):
     """Synchronous yt-dlp search – returns list of track dicts."""
     ydl_opts = {
-        "format": "bestaudio/best",
-        "noplaylist": True,
-        "extract_flat": True,   # flat extract is much faster (no full page load)
-        "quiet": True,
-        "no_warnings": True,
+    "format": "bestaudio/best",
+    "quiet": True,
+    "no_warnings": True,
+
+    "cookiefile": "cookies.txt",
+
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["android"]
+        }
+    },
+
+    "http_headers": {
+        "User-Agent": "Mozilla/5.0"
     }
+}
     # Prefer official uploads: append 'official audio' unless it's already a
     # genre/category query that would look odd with it
     skip_keywords = {"similar", "playlist", "mix", "hits", "top", "lofi", "compilation"}

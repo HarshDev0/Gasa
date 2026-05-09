@@ -4,7 +4,7 @@ import TopBar from './components/TopBar';
 import Player from './components/Player';
 import Discovery from './components/Discovery';
 
-const API = "https://gasa-production.up.railway.app";;
+const API = "https://gasa-hwt8.onrender.com/";;
 
 function App() {
   // ── Single global audio element (prevents double-play bug) ──────────────
